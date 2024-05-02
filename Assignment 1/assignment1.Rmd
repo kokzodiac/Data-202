@@ -1,0 +1,248 @@
+---
+title: "Assignment 1"
+author: "David Nguyen 300584723"
+date: "2024-03-07"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Q1
+
+### a.
+
+Numerical - Continuous - numeric - double
+
+### b. 
+
+Categorical - Logical - logical - logical
+
+### c.
+
+Numerical - discrete - numeric - integer
+
+### d.
+
+Categorical - Nominal - character - character
+
+### e.
+
+Categorical - Ordinal - ordered factor - integer
+
+## Q2.
+
+```{r}
+y <- c("Earth"=0, "Water"=-3, "Fire"=2)
+y
+```
+### a.
+
+```{r}
+y[y==2]
+```
+
+### b.
+
+```{r}
+names(y[y==2])
+```
+
+### c.
+```{r}
+a <- c(3,4,1)
+a
+z <- matrix(c(0,3,0,9,2,1), nrow = 2, ncol = 3)
+z
+
+```
+### d.
+```{r}
+max(a)
+```
+
+## Q3.
+
+### a.
+
+```{r, error=TRUE}
+standardize_column <- function(mat, col_index){
+    mean <- mean(mat[,col_index], na.rm = TRUE)
+    std <- sd(mat[,col_index], na.rm = TRUE)
+    z <- ((mat[,col_index]-mean)/std)
+    print(z)
+}
+
+```
+### b.
+```{r, error=TRUE}
+mat <- matrix(c(12,1,4,3,NA,9,NA,5,5), nrow=3)
+test <- standardize_column(mat,2) #Testing on column 2
+```
+
+### c.
+```{r, error=TRUE}
+standardize_column <- function(mat, col_index){
+  # Modified function ------------------------------
+  if (col_index>=ncol(mat) ||  #check if index greater than n.o cols
+      col_index <= 0||  # check if col_index negative or zero  
+      col_index != as.integer(col_index)){ #check if col_index is decimal index condition
+    stop("col must be a valid index of mat")
+  }
+  else {
+    mean <- mean(mat[,col_index], na.rm = TRUE)
+    std <- sd(mat, na.rm = TRUE)
+    z <- ((mat[,col_index]-mean)/std)
+    print(z)
+  }
+}
+```
+
+### d.
+```{r, error=TRUE}
+standardize_column(mat,.3)
+standardize_column(mat, -1)
+
+```
+## Q4.
+
+### a.
+```{r}
+stars <- read.csv("star_dataset_deepu_kaggle.csv")
+```
+### b.
+```{r}
+head(stars,2)
+```
+### c.
+```{r}
+print(paste("Number of rows of stars:",nrow(stars)))
+print(paste("Number of columns of stars:",ncol(stars)))
+```
+### d.
+```{r}
+subset_stars <- stars[stars$Star.color == "Blue" |stars$Star.color == "White"|stars$Star.color == "Orange",]
+subset_stars
+```
+### e.
+```{r}
+print(class(subset_stars$Star.color))
+```
+We can see that Star.color is being treated as character instead of factor.
+
+### f.
+``` {r}
+subset_stars$star_colours <- factor(subset_stars$Star.color, levels = c("Blue", "White", "Orange"))
+```
+
+### g.
+```{r}
+#Create a frequency table
+color_counts <- table(subset_stars$star_colours)
+color_counts
+# Create a bar plot
+barplot(color_counts, main = "Frequency of Star Colors", 
+        xlab = "Star Color", ylab = "Number of Stars", col = c("navy", "grey", "orange2"),
+        legend.text = levels(subset_stars$star_colours))
+```
+
+## Q5.
+x=y assign y to x
+
+x==y check if x equals to y, it can return either TRUE or FALSE
+
+x<-y same with the case of x=y, it will asign the value of y to x
+but the "=" sign is more commonly used in function calls rather than
+assigning to prevent from facing complex expressions
+
+x<(-y) checks if x is smaller than the negative value of y
+
+x^(-y) shows the value of x with the power of negative value of y
+
+## Q6.
+### a.
+```{r}
+library("palmerpenguins")
+penguins
+hist(penguins$body_mass_g, main="Distribution of Penguins Body Mass", xlab = "Penguins Weight (g)", col = "lightgreen")
+```
+
+### b.
+```{r}
+plot(penguins$flipper_length_mm, penguins$bill_length_mm,
+     main = "Scatter Plot of Flipper Length and Bill Length", col = "lightblue", xlab = "Fliiper length (mm)",
+     ylab ="Bill length (mm)",pch=16)
+
+```
+
+### c.
+
+```{r}
+
+```
+
+```{r}
+library("palmerpenguins")
+barplot(table(penguins$species, penguins$island), beside=TRUE,
+        xlab = "Island", ylab="Frequency", legend.text = TRUE, col = c("pink","khaki","lightgreen"))
+```
+
+
+### d.
+
+```{r}
+boxplot(penguins$body_mass_g~penguins$sex, main="Body Mass by Sex",
+        col = "blue",xlab = "Gender",ylab = "Weight (g)")
+```
+
+## Q7.
+### Line 2
+
+```{r, eval = FALSE}
+# Define x
+x <= c(3,0,5,6,NA,3,1)
+#### FINDING: it is supposed to be 'x <-' not 'x <='
+```
+
+```{r}
+### CORRECTED CODE:
+x <- c(3,0,5,6,NA,3,1)
+```
+
+### Line 4 
+```{r, eval = FALSE}
+# Store the first five entries of x as a new object called y
+y <- x[0:4]
+### FINDING: R indices are 1-based which means the vector indices start from 1 not 0 like other languages. Therefore, in order to
+# store the first five entries, we need to rewrite the code from '[0:4] to [1:5]'
+```
+
+
+```{r}
+### CORRECTED CODE:
+y <- x[1:5]
+```
+### Line 6
+```{r, eval =FALSE}
+# Calculate the maximum value of y after excluding NA entries
+max_y <- max(y, na.remove=TRUE)
+### FINDING: the second argument is supposed to be 'na.rm' not 'na.remove'
+```
+
+```{r}
+### CORRECTED CODE:
+max_y <- max(y,na.rm = TRUE)
+```
+
+### Line 8
+```{r}
+# Fetch the entries of y that are bigger than 2
+y[y >= 2]
+### FINDING: The sign >= means 'bigger or equal to 2', we need to use '>' instead 
+```
+
+```{r}
+### CORRECTED CODE:
+y[y>2]
+```
