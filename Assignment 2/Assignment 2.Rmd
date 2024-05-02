@@ -1,0 +1,294 @@
+---
+title: "Assignment 2"
+author: "David Nguyen"
+date: "2024-04-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(DBI)
+library(RSQLite)
+library(dplyr)
+```
+## Q1
+### a.
+```{r}
+movies <- read.csv("movies500.csv")
+movies_genres <- read.csv("movies500_genres.csv")
+genres <- read.csv("genres.csv")
+```
+
+
+### b.
+Check to remove any existing file with this name first
+```{r}
+if (file.exists("movies.sqlite")) {
+  file.remove("movies.sqlite")
+}
+```
+Since that is true then it is good to create a new sqlite file
+```{r}
+test_conn <- dbConnect(RSQLite::SQLite(), "movies.sqlite")
+list.files()
+```
+
+### c.
+
+```{r}
+dbWriteTable(test_conn, "movies", movies, overwrite=TRUE)
+dbWriteTable(test_conn, "movies_genres", movies_genres, overwrite=TRUE)
+dbListTables(test_conn)
+```
+
+### d.
+
+```{sql connection = test_conn}
+SELECT COUNT(*) as number_of_rows
+FROM movies_genres;
+```
+The number of rows are 703 
+
+### e.
+
+```{sql connection = test_conn}
+SELECT title, runtime, release_date
+FROM movies
+WHERE runtime > 360
+ORDER BY runtime DESC;
+```
+
+### f.
+
+```{sql connection = test_conn}
+SELECT *
+FROM movies
+WHERE title LIKE '%dream%';
+```
+
+### g.
+
+
+```{sql connection = test_conn}
+CREATE TABLE IF NOT EXISTS genres (
+    genre_id INTEGER PRIMARY KEY,
+    genre_name TEXT
+)
+```
+
+### h.
+```{r}
+dbWriteTable(test_conn, "genres", genres, overwrite=TRUE)
+```
+
+```{sql connection=test_conn}
+SELECT *
+FROM genres
+```
+
+### i.
+
+```{sql connection = test_conn}
+INSERT INTO genres(genre_id, genre_name)
+VALUES
+(7981, "Fairy Tale")
+```
+
+Check if it is in genre table
+
+```{sql connection = test_conn}
+SELECT *
+FROM genres
+WHERE genre_name = "Fairy Tale"
+```
+**There is!**
+
+### j.
+
+```{sql connection = test_conn}
+UPDATE genres
+SET genre_name = "Magical Realism"
+WHERE genre_id = 7981
+```
+
+```{sql connection = test_conn}
+SELECT *
+FROM genres
+ORDER BY genre_name
+```
+
+### k.
+
+```{sql connection = test_conn}
+SELECT genre_id, movies.title
+FROM movies 
+JOIN movies_genres ON movies.tmdbId = movies_genres.tmdbId
+WHERE movies.title = 'Running Wild' 
+
+```
+
+### I.
+
+```{sql connection = test_conn}
+SELECT movies.title, genre_name
+FROM movies
+JOIN movies_genres ON movies.tmdbId = movies_genres.tmdbId
+JOIN genres ON movies_genres.genre_id = genres.genre_id
+WHERE movies.title = 'A Kiss at Midnight'
+```
+
+### m.
+
+```{sql connection = test_conn}
+SELECT g.genre_id, g.genre_name, COUNT(mg.tmdbId) AS movie_count
+FROM genres g
+LEFT JOIN movies_genres mg ON g.genre_id = mg.genre_id
+GROUP BY g.genre_id, g.genre_name
+HAVING COUNT(mg.tmdbId) >= 10
+ORDER BY movie_count DESC;
+```
+
+```{r}
+dbDisconnect(test_conn)
+```
+
+## Q2
+```{r}
+library(dplyr)
+library(tidyr)
+vehicles <- read.csv("motor_vehicle_modified.csv", stringsAsFactors = FALSE)
+
+```
+### a.
+
+```{r}
+head(vehicles,5)
+```
+
+```{r}
+#Base R
+vehicles[vehicles$body_type=="light van" & vehicles$make==c("Mitsubishi","Mazda"),]
+```
+**dplyr way**
+
+```{r}
+#dplyr
+filter(vehicles, body_type =="light van", make==c("Mitsubishi","Mazda"))
+```
+
+### b.
+
+```{r}
+nrow(vehicles[vehicles$TLA=="Wellington City" & vehicles$vehicle_usage=="private passenger",])
+```
+**dplyr way**
+
+```{r}
+nrow(filter(vehicles, TLA =="Wellington City", vehicle_usage =="private passenger"))
+```
+
+### c.
+
+```{r}
+vehicles_country_status <- table(vehicles$original_country, vehicles$import_status)
+vehicles_country_status
+```
+
+
+
+**dplyr way**
+
+```{r}
+vehicles_country_status <- vehicles %>%
+  count(original_country, import_status) %>%
+  pivot_wider(names_from = import_status, values_from = n, values_fill = 0)
+vehicles_country_status
+```
+
+### e.
+
+*R way*
+```{r}
+sorted_data <- vehicles_country_status[order(vehicles_country_status$used,
+                                             decreasing = TRUE,
+                                             method="radix"),]
+head(sorted_data)
+```
+
+*dplyr way*
+
+```{r}
+sorted_data2 <- arrange(vehicles_country_status, desc(used))
+head(sorted_data)
+```
+
+## Q3.
+```{r}
+library(tidyr)
+library(ggplot2)
+library(zoo)
+earnings_wide <- read.csv("average_weekly_earnings.csv", stringsAsFactors = FALSE)
+earnings_wide$Date <- as.Date(as.yearqtr(earnings_wide$Date, format="%YQ%q"))
+```
+
+### a.
+
+```{r}
+earnings_long <- pivot_longer(earnings_wide,cols = c(Information.Media.Telecoms, Healthcare.SocialAssistance, Arts.Recreation.Other, Accommodation.Food, Total.All.Industries), 
+               names_to = "Industry",
+               values_to = "Average.Weekly.Earnings")
+earnings_long
+```
+
+### b.
+
+```{r}
+ggplot (earnings_long)+
+  geom_line(aes(x=Date,y=Average.Weekly.Earnings, color=Industry)) + 
+  labs(x="Date", y= "Weeky Earning", title = "Average Weekly Earnings by Industry Over Time") +
+  theme(axis.text.x = element_text(hjust = 1), axis.title = element_text(size=11), title = element_text(size=15))
+```
+
+### c.
+
+```{r}
+earnings_long_to2005 <- earnings_long[earnings_long$Date < '2006-01-01',]
+earnings_long_to2020 <- earnings_long[earnings_long$Date >= '2006-01-01',]
+
+earnings_max_to2005 <- earnings_long_to2005 %>%
+  group_by(Industry) %>%
+  summarize(Max_Earnings = max(Average.Weekly.Earnings))
+
+
+earnings_max_to2020 <- earnings_long_to2020 %>%
+  group_by(Industry) %>%
+  summarize(Max_Earnings = max(Average.Weekly.Earnings))
+```
+
+### d.
+
+```{r}
+earnings_max_to2005<- mutate(earnings_max_to2005, Years = "Up to 2005")
+earnings_max_to2020<- mutate(earnings_max_to2020, Years = "Between 2005 and now")
+earning_max_now <- rbind(earnings_max_to2005,earnings_max_to2020)
+
+earning_max_now$Years <- factor(earning_max_now$Years, levels = c("Up to 2005", "Between 2005 and now"))
+earning_max_now              
+```
+
+### e.
+
+```{r}
+ggplot(earning_max_now, aes(x=Years, y = Max_Earnings, fill = Industry))+
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(x = "Time Period", y = "Max Earnings", title = "Difference in Highest Earnings by Industry and Time Period") + 
+  theme(legend.title = element_blank(),
+        panel.grid.major.y = element_line(color = "gray", linetype = "dashed"),
+        panel.grid.minor.y = element_blank())
+
+```
+
